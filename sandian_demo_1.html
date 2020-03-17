@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <script type="text/javascript" src="js/echarts.min.js"></script>
+    <script type="text/javascript" src="js/bmap.js"></script>
+    <script type="text/javascript" src="js/jquery-1.8.2.js"></script>
+    <!--<script src="js/bluebird.js"></script>-->
+    <script type="text/javascript" src="js/html2canvas.min.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=XwdYFHmZGHAiAVkExX33Pjl9M5AasUqG"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #container {
+            height: 800px;
+            width: 1000px;
+        }
+
+        .anchorBL {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<button id="btn">导出地图</button>
+<script>
+    var myChart = echarts.init(document.getElementById('container'));
+    var data = [
+        {name: '南通', value: 9},
+        {name: '昆山', value: 19},
+        {name: '连云港', value: 29},
+        {name: '淮安', value: 39},
+        {name: '泰州', value: 6},
+        {name: '宿迁', value: 16},
+        {name: '苏州', value: 26},
+        {name: '镇江', value: 20},
+        {name: '扬州', value: 30},
+        {name: '常州', value: 15},
+        {name: '南京', value: 3},
+        {name: '徐州', value: 9},
+
+    ];
+    var datas = [
+        {
+            "far": "0.3092485549132948",
+            "lon": "118.02",
+            "ID": "58026",
+            "lat": "34.39"
+        },
+        {
+            "far": "0.2988165680473373",
+            "lon": "118.35",
+            "ID": "58035",
+            "lat": "34.33"
+        },
+        {
+            "far": "0.3136645962732919",
+            "lon": "118.71",
+            "ID": "58036",
+            "lat": "34.54"
+        },
+        {
+            "far": "0.3569230769230769",
+            "lon": "119.44",
+            "ID": "58041",
+            "lat": "34.78"
+        },
+        {
+            "far": "0.2876712328767123",
+            "lon": "119.6",
+            "ID": "58045",
+            "lat": "34.2"
+        },
+    ]
+    var geoCoordMap = {
+        '南通': [121.05, 32.08],
+        '昆山': [120.95, 31.39],
+        '连云港': [119.16, 34.59],
+        '常熟': [120.74, 31.64],
+        '淮安': [119.15, 33.5],
+        '泰州': [119.9, 32.49],
+        '宿迁': [118.3, 33.96],
+        '苏州': [120.62, 31.32],
+        '镇江': [119.44, 32.2],
+        '扬州': [119.42, 32.39],
+        '常州': [119.95, 31.79],
+        '南京': [118.78, 32.04],
+        '徐州': [117.2, 34.26],
+    };
+    var convertData = function (data) {
+        var res = [];
+        for (var i = 0; i < data.length; i++) {
+            res.push({
+                name: data[i].ID,
+                value: [parseFloat(data[i].lon), parseFloat(data[i].lat), parseFloat(data[i].far)]
+            });
+        }
+        return res;
+    };
+    var option = {
+        title: {　　//标题
+            text: '',
+            subtext: '',　　//副标题
+            sublink: '',　　//副标题链接
+            left: 'center'　　//标题位置，居中
+        },
+        // toolbox: {
+        //     show: true,
+        //     feature: {
+        //         saveAsImage: {
+        //             show:true,
+        //             excludeComponents :['toolbox'],
+        //             pixelRatio: 2,
+        //             connectedBackgroundColor:'#fff'
+        //         },
+        //     }
+        // },
+        tooltip: {
+            formatter: function (params) {
+                return (
+                    "站点: " + params.name + "<br>空气质量: " + params.value[2]
+                );
+            }
+        },
+        bmap: {　　//百度地图的设置
+            center: [118.78, 32.07],　　//中心点
+            zoom: 8,　　　　　　　　　//缩放　　
+            roam: false,　　　　　　//漫游
+            mapStyle: {
+                styleJson: [
+                    {
+                        "featureType": "land",
+                        "elementType": "geometry",
+                        "stylers": {
+                            "color": "#dad8dbff",
+                            "visibility": "on"
+                        }
+                    },
+                    {
+                        'featureType': 'building',   //调整建筑物颜色
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'color': '#04406F'
+                        }
+                    },
+                    {
+                        'featureType': 'building',   //调整建筑物标签是否可视
+                        'elementType': 'labels',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'highway',     //调整高速道路颜色
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'color': '#015B99',
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'highway',    //调整高速名字是否可视
+                        'elementType': 'labels',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'arterial',   //调整一些干道颜色
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'color': '#003051'
+                        }
+                    },
+                    {
+                        'featureType': 'arterial',
+                        'elementType': 'labels',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'green',
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "geometry",
+                        "stylers": {
+                            "color": "#8c8e8fff",
+                            "visibility": "on"
+                        }
+                    },
+                    {
+                        'featureType': 'subway',    //调整地铁颜色
+                        'elementType': 'geometry.stroke',
+                        'stylers': {
+                            'color': '#003051'
+                        }
+                    },
+                    {
+                        'featureType': 'subway',
+                        'elementType': 'labels',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'railway',
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'railway',
+                        'elementType': 'labels',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'all',     //调整所有的标签的边缘颜色
+                        'elementType': 'labels.text.stroke',
+                        'stylers': {
+                            'color': '#313131'
+                        }
+                    },
+                    {
+                        'featureType': 'all',     //调整所有标签的填充颜色
+                        'elementType': 'labels.text.fill',
+                        'stylers': {
+                            'color': '#FFFFFF'
+                        }
+                    },
+                    {
+                        'featureType': 'manmade',
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'manmade',
+                        'elementType': 'labels',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'local',
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'local',
+                        'elementType': 'labels',
+                        'stylers': {
+                            'visibility': 'off'
+                        }
+                    },
+                    {
+                        'featureType': 'subway',
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'lightness': -65
+                        }
+                    },
+                    {
+                        'featureType': 'railway',
+                        'elementType': 'all',
+                        'stylers': {
+                            'lightness': -40
+                        }
+                    },
+                    {
+                        'featureType': 'boundary',
+                        'elementType': 'geometry',
+                        'stylers': {
+                            'color': '#8b8787',
+                            'weight': '1',
+                            'lightness': -29
+                        }
+                    }
+                ]
+            }
+        },
+
+        series: [
+            {
+                name: '空气质量',
+                type: 'effectScatter',
+                coordinateSystem: 'bmap',
+                data: convertData(datas),
+                symbolSize: function (val) {
+                    return val[2] * 50;
+                },
+                rippleEffect: {brushType: 'stroke'},
+                hoverAnimation: true,
+                //label: {normal: {formatter: '{b}', position: 'right', show: true}},
+                itemStyle: {normal: {color: '#780385', shadowBlur: 10, shadowColor: '#333'}},
+                zlevel: 1
+            },
+        ]
+    };
+    myChart.setOption(option);
+    var bmap = myChart.getModel().getComponent('bmap').getBMap();
+     // bmap.addEventListener("tilesloaded", function () {}//地图加载完成事件
+        // canvas生成图片
+        $("#btn").on("click", function () {
+            // svg转canvas
+            let nodesToRecover = [];
+            let nodesToRemove = [];
+            let svgElem = $("#map").find('svg'); // divReport为需要截取成图片的dom的id
+            let prepare = [];
+            for (let i = 0; i < svgElem.length; i++) {
+                prepare.push(0);
+            }
+            svgElem.each(function (index, node) {
+                let parentNode = node.parentNode;
+                let svg = node.outerHTML;
+                let canvas = document.createElement('canvas');
+                canvg(canvas, svg);
+                canvas.style.position = node.style.position;
+                canvas.style.width = node.style.width;
+                canvas.style.height = node.style.height;
+                canvas.style.left = 0;
+                canvas.style.top = 0;
+                let ctx = canvas.getContext('2d');
+                let svg_xml = (new XMLSerializer()).serializeToString(node);
+                let img = new Image();
+                img.src = "data:image/svg+xml;base64," + window.btoa(svg_xml);
+                img.onload = function () {
+                    ctx.drawImage(img, 0, 0);
+                    prepare[index] = 1;
+                    // download(canvas.toDataURL("image/png")); // 调试用
+                }
+                parentNode.appendChild(canvas); // 使用canvas代替svg进行截图
+                nodesToRemove.push({ // 完成截图后删除canvas
+                    parent: parentNode,
+                    child: canvas
+                });
+                nodesToRecover.push({ // 完成截图后恢复svg
+                    parent: parentNode,
+                    child: node
+                });
+                parentNode.removeChild(node); // 暂时移除svg
+            });
+            let waitInterval = setInterval(() => {
+                let isComplete = true;
+                for (let i = 0; i < prepare.length; i++) {
+                    if (prepare[i] == 0) {
+                        isComplete = false;
+                        break;
+                    }
+                }
+                if (isComplete) {
+                    clearInterval(waitInterval);
+                    // div转canvas截图
+                    html2canvas(document.getElementById('container'), {
+                        useCORS: true
+                    }).then((cnv) => {
+                        let imgUrl = cnv.toDataURL("image/png"); // 将canvas转换成img的src流，base64
+                        for (let i = 0; i < nodesToRecover.length; i++) {
+                            nodesToRecover[i].parent.appendChild(nodesToRecover[i].child);
+                        }
+                        for (let i = 0; i < nodesToRemove.length; i++) {
+                            nodesToRemove[i].parent.removeChild(nodesToRemove[i].child);
+                        }
+                        download(imgUrl);
+                    });
+                }
+            }, 5);
+    })
+    // edited from https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob#Polyfill
+        /* 下载图片的方法 */
+        function download(url) {
+            let a = document.createElement('a');
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            let triggerDownload = $(a).attr("href", url).attr("download", "test");
+            triggerDownload[0].click();
+            document.body.removeChild(a);
+        }
+</script>
+<script type="text/javascript">
+    $(document).ready(function () {
+
+    })
+</script>
+</body>
+</html>
